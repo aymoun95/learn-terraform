@@ -13,6 +13,25 @@ locals {
   }]
 
   instance_sizes = lookup(var.instance_sizes, var.environment, "t3.medium")
+
+
+  all_locations=concat(var.user_locations, var.default_locations)
+
+  unique_locations = toset(local.all_locations)
+
+  positive_cost = [for cost in var.monthly_costs : abs(cost) ]
+  maximum_cost = max(local.positive_cost...)
+  minimum_cost = min(local.positive_cost...)
+  total_cost   = sum(local.positive_cost)
+  average_cost = local.total_cost / length(local.positive_cost)
+
+
+  current_timestamp = timestamp()
+  format1 = formatdate("YYYY-MM-DD", local.current_timestamp)
+  format2 = formatdate("YYYYMMDD_HHMMSS", local.current_timestamp)
+
+  config_file_exists = fileexists("./config.json")
+  config_data=local.config_file_exists? jsondecode(file("./config.json")) : {}
 }
 
 resource "aws_s3_bucket" "firsts3" {
